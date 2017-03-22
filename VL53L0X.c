@@ -44,11 +44,11 @@
 //   , did_timeout(false)
 // {
 // }
-VL53L0X(void) {
-  address = (ADDRESS_DEFAULT);
-  io_timeout =0 ; // no timeout
-  did_timeout = false;
-}
+//!VL53L0X(void) {
+//!  address = (ADDRESS_DEFAULT);
+//!  io_timeout =0 ; // no timeout
+//!  did_timeout = false;
+//!}
 // Public Methods //////////////////////////////////////////////////////////////
 
 void setAddress(int8 new_addr)
@@ -68,7 +68,10 @@ void setAddress(int8 new_addr)
 boolean init(boolean io_2v8)
 {
   // VL53L0X_DataInit() begin
-
+  address = (ADDRESS_DEFAULT);
+  io_timeout =0 ; // no timeout
+  did_timeout = false;
+  
   // sensor uses 1V8 mode for I/O by default; switch to 2V8 mode if necessary
   if (io_2v8)
   {
@@ -101,7 +104,7 @@ boolean init(boolean io_2v8)
 
   int8 spad_count;
   //boolean spad_type_is_aperture;    // boolean can't be used as a pointer
-  int8 spad_type_is_apertur=0e;
+  int8 spad_type_is_aperture;
   
   
   
