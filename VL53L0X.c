@@ -101,7 +101,7 @@ boolean init(boolean io_2v8)
 
   int8 spad_count;
   //boolean spad_type_is_aperture;    // boolean can't be used as a pointer
-  int8 spad_type_is_aperture;
+  int8 spad_type_is_apertur=0e;
   
   
   

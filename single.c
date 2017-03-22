@@ -41,7 +41,7 @@ void pic_setup() {
 // other than the intended target. It works best in dark
 // conditions.
 
-//#define LONG_RANGE
+#define LONG_RANGE
 
 
 // Uncomment ONE of these two lines to get
@@ -49,7 +49,7 @@ void pic_setup() {
 // - higher accuracy at the cost of lower speed
 
 //#define HIGH_SPEED
-//#define HIGH_ACCURACY
+#define HIGH_ACCURACY
 
 
 void setup()
@@ -57,10 +57,15 @@ void setup()
   // Serial.begin(9600);
   // Wire.begin();
 
+   output_high(PIN_B5);
+   delay_ms(1000);
+   output_low(PIN_B5);
+   printf("Starting\r\n");
+   
    pic_setup();
 
   init();
-  setTimeout(500);
+  setTimeout(200);
 
 #if defined LONG_RANGE
   // lower the return signal rate limit (default is 0.25 MCPS)
@@ -90,7 +95,7 @@ void main() {
    setup();
    while(1) {
       loop();
-      delay_ms(200);
+     // delay_ms(200);
    }
 
 }
