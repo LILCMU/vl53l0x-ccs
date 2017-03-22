@@ -9,7 +9,7 @@ Based on the VL53L0X library for the Arduino by Pololu. See the project on [GitH
 
 ## Summary
 
-This is a library for the VL53L0X time-of-flight distance sensors. It is a port from the Arduino library to CCS's PIC-C compiler for use with Microchip PICs. The library targets the PIC16F886 but it should work with any other PICs with more than 4K flash memory, including PIC18, PIC24. 
+This is a library for the VL53L0X time-of-flight distance sensors. It is a port from the Arduino library to CCS's PIC-C compiler for use with Microchip PICs. The library targets the PIC16F886 but it should work with any other PICs with more than 4K flash memory, including PIC18s and PIC24s. 
 
 ## Getting Started
 
