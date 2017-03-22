@@ -90,7 +90,38 @@
       ALGO_PHASECAL_CONFIG_TIMEOUT                = 0x30,
     };
 
+    // private variables
+
+    typedef struct 
+    {
+      boolean tcc, msrc, dss, pre_range, final_range;
+    } SequenceStepEnables;
+
+
+
+    typedef struct 
+    {
+      int16 pre_range_vcsel_period_pclks, final_range_vcsel_period_pclks;
+
+      int16 msrc_dss_tcc_mclks, pre_range_mclks, final_range_mclks;
+      int32 msrc_dss_tcc_us,    pre_range_us,    final_range_us;
+    } SequenceStepTimeouts;
+
+    void getSequenceStepEnables(SequenceStepEnables * enables);
+    void getSequenceStepTimeouts(SequenceStepEnables * enables, SequenceStepTimeouts * timeouts);
+    
+    
     enum vcselPeriodType { VcselPeriodPreRange, VcselPeriodFinalRange };
+
+    int8 address;
+    int16 io_timeout;
+    boolean did_timeout;
+    int16 timeout_start_ms;
+
+    int8 stop_variable; // read by init and used when starting measurement; is StopVariable field of VL53L0X_DevData_t structure in API
+    int32 measurement_timing_budget_us;
+
+    boolean getSpadInfo(int8 * count, boolean * type_is_aperture);
 
     int8 last_status; // status of last I2C transmission
 
@@ -100,6 +131,7 @@
     int8 getAddress(void) { return address; }
 
     boolean init(boolean io_2v8 = TRUE);
+    #separate boolean init2();
 
     void writeReg(int8 reg, int8 value);
     void writeReg16Bit(int8 reg, int16 value);
@@ -108,7 +140,7 @@
     int16 readReg16Bit(int8 reg);
     int32 readReg32Bit(int8 reg);
 
-    void writeMulti(int8 reg, int8 const * src, int8 count);
+    void writeMulti(int8 reg, int8  * src, int8 count);
     void readMulti(int8 reg, int8 * dst, int8 count);
 
     boolean setSignalRateLimit(float limit_Mcps);
@@ -129,33 +161,7 @@
     int16 getTimeout(void) { return io_timeout; }
     boolean timeoutOccurred(void);
 
-    // private variables
 
-    struct SequenceStepEnables
-    {
-      booleanean tcc, msrc, dss, pre_range, final_range;
-    };
-
-    struct SequenceStepTimeouts
-    {
-      int16 pre_range_vcsel_period_pclks, final_range_vcsel_period_pclks;
-
-      int16 msrc_dss_tcc_mclks, pre_range_mclks, final_range_mclks;
-      int32 msrc_dss_tcc_us,    pre_range_us,    final_range_us;
-    };
-
-    int8 address;
-    int16 io_timeout;
-    boolean did_timeout;
-    int16 timeout_start_ms;
-
-    int8 stop_variable; // read by init and used when starting measurement; is StopVariable field of VL53L0X_DevData_t structure in API
-    int32 measurement_timing_budget_us;
-
-    boolean getSpadInfo(int8 * count, boolean * type_is_aperture);
-
-    void getSequenceStepEnables(SequenceStepEnables * enables);
-    void getSequenceStepTimeouts(SequenceStepEnables const * enables, SequenceStepTimeouts * timeouts);
 
     boolean performSingleRefCalibration(int8 vhv_init_byte);
 

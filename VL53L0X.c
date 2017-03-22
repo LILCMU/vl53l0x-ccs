@@ -10,10 +10,14 @@
 
 // The Arduino two-wire interface uses a 7-bit number for the address,
 // and sets the last bit correctly based on reads and writes
-#define ADDRESS_DEFAULT 0b0101001
+//#define ADDRESS_DEFAULT 0b0101001
+
+// 8 bit i2c address
+#define ADDRESS_DEFAULT 0b01010010
 
 // Record the current time to check an upcoming timeout against
 #define startTimeout() (timeout_start_ms = millis())
+//#define startTimeout() (timeout_start_ms = 0)
 
 // Check if timeout is enabled (set to nonzero value) and has expired
 #define checkTimeoutExpired() (io_timeout > 0 && ((int16)millis() - timeout_start_ms) > io_timeout)
@@ -42,8 +46,8 @@
 // }
 VL53L0X(void) {
   address = (ADDRESS_DEFAULT);
-  io_timeout(0); // no timeout
-  did_timeout(false);
+  io_timeout =0 ; // no timeout
+  did_timeout = false;
 }
 // Public Methods //////////////////////////////////////////////////////////////
 
@@ -96,7 +100,11 @@ boolean init(boolean io_2v8)
   // VL53L0X_StaticInit() begin
 
   int8 spad_count;
-  boolean spad_type_is_aperture;
+  //boolean spad_type_is_aperture;    // boolean can't be used as a pointer
+  int8 spad_type_is_aperture;
+  
+  
+  
   if (!getSpadInfo(&spad_count, &spad_type_is_aperture)) { return false; }
 
   // The SPAD map (RefGoodSpadMap) is read by VL53L0X_get_info_from_device() in
@@ -230,7 +238,14 @@ boolean init(boolean io_2v8)
   writeReg(0x00, 0x01);
   writeReg(0xFF, 0x00);
   writeReg(0x80, 0x00);
+  
+  return init2();
 
+
+}
+
+
+#separate boolean init2() {
   // -- VL53L0X_load_tuning_settings() end
 
   // "Set interrupt config to new sample ready"
@@ -285,32 +300,69 @@ boolean init(boolean io_2v8)
 // Write an 8-bit register
 void writeReg(int8 reg, int8 value)
 {
-  Wire.beginTransmission(address);
-  Wire.write(reg);
-  Wire.write(value);
-  last_status = Wire.endTransmission();
+//!  Wire.beginTransmission(address);
+//!  Wire.write(reg);
+//!  Wire.write(value);
+//!  last_status = Wire.endTransmission();
+
+// IN the Arduino, last_status has the following values
+//!0:success
+//!1:data too long to fit in transmit buffer
+//!2:received NACK on transmit of address
+//!3:received NACK on transmit of data
+//!4:other error
+
+// In our current port, last_status will only depend on the
+// success or failure of the last transmitted byte
+// 0 = success, got an ack
+// 1 =  no ack (NACK)
+// 2 = collision
+
+i2c_start();
+i2c_write(address);
+i2c_write(reg);
+last_status = i2c_write(value);
+i2c_stop();
+
 }
 
 // Write a 16-bit register
 void writeReg16Bit(int8 reg, int16 value)
 {
-  Wire.beginTransmission(address);
-  Wire.write(reg);
-  Wire.write((value >> 8) & 0xFF); // value high byte
-  Wire.write( value       & 0xFF); // value low byte
-  last_status = Wire.endTransmission();
+//!  Wire.beginTransmission(address);
+//!  Wire.write(reg);
+//!  Wire.write((value >> 8) & 0xFF); // value high byte
+//!  Wire.write( value       & 0xFF); // value low byte
+//!  last_status = Wire.endTransmission();
+i2c_start();
+i2c_write(address);
+i2c_write(reg);
+i2c_write((value >> 8) & 0xFF);
+last_status = i2c_write(value & 0xFF);
+i2c_stop();
+
 }
 
 // Write a 32-bit register
 void writeReg32Bit(int8 reg, int32 value)
 {
-  Wire.beginTransmission(address);
-  Wire.write(reg);
-  Wire.write((value >> 24) & 0xFF); // value highest byte
-  Wire.write((value >> 16) & 0xFF);
-  Wire.write((value >>  8) & 0xFF);
-  Wire.write( value        & 0xFF); // value lowest byte
-  last_status = Wire.endTransmission();
+//!  Wire.beginTransmission(address);
+//!  Wire.write(reg);
+//!  Wire.write((value >> 24) & 0xFF); // value highest byte
+//!  Wire.write((value >> 16) & 0xFF);
+//!  Wire.write((value >>  8) & 0xFF);
+//!  Wire.write( value        & 0xFF); // value lowest byte
+//!  last_status = Wire.endTransmission();
+
+i2c_start();
+i2c_write(address);
+i2c_write(reg);
+i2c_write((value >> 24) & 0xFF);
+i2c_write((value >> 16) & 0xFF);
+i2c_write((value >>  8) & 0xFF);
+last_status = i2c_write(value & 0xFF);
+i2c_stop();
+
 }
 
 // Read an 8-bit register
@@ -318,14 +370,24 @@ int8 readReg(int8 reg)
 {
   int8 value;
 
-  Wire.beginTransmission(address);
-  Wire.write(reg);
-  last_status = Wire.endTransmission();
+//!  Wire.beginTransmission(address);
+//!  Wire.write(reg);
+//!  last_status = Wire.endTransmission();
+//!
+//!  Wire.requestFrom(address, (int8)1);
+//!  value = Wire.read();
+//!
 
-  Wire.requestFrom(address, (int8)1);
-  value = Wire.read();
-
+  i2c_start();
+  i2c_write(address);
+  last_status = i2c_write(reg);
+  
+  i2c_start();
+  i2c_write(address | 1);
+  value = i2c_read(0);
+  
   return value;
+
 }
 
 // Read a 16-bit register
@@ -333,13 +395,22 @@ int16 readReg16Bit(int8 reg)
 {
   int16 value;
 
-  Wire.beginTransmission(address);
-  Wire.write(reg);
-  last_status = Wire.endTransmission();
+//!  Wire.beginTransmission(address);
+//!  Wire.write(reg);
+//!  last_status = Wire.endTransmission();
+//!
+//!  Wire.requestFrom(address, (int8)2);
+//!  value  = (int16)Wire.read() << 8; // value high byte
+//!  value |=           Wire.read();      // value low byte
 
-  Wire.requestFrom(address, (int8)2);
-  value  = (int16)Wire.read() << 8; // value high byte
-  value |=           Wire.read();      // value low byte
+  i2c_start();
+  i2c_write(address);
+  last_status = i2c_write(reg);
+  
+  i2c_start();
+  i2c_write(address | 1);
+  value = (int16)i2c_read() << 8;
+  value |= i2c_read(0);
 
   return value;
 }
@@ -349,48 +420,86 @@ int32 readReg32Bit(int8 reg)
 {
   int32 value;
 
-  Wire.beginTransmission(address);
-  Wire.write(reg);
-  last_status = Wire.endTransmission();
+//!  Wire.beginTransmission(address);
+//!  Wire.write(reg);
+//!  last_status = Wire.endTransmission();
+//!
+//!  Wire.requestFrom(address, (int8)4);
+//!  value  = (int32)Wire.read() << 24; // value highest byte
+//!  value |= (int32)Wire.read() << 16;
+//!  value |= (int16)Wire.read() <<  8;
+//!  value |=           Wire.read();       // value lowest byte
 
-  Wire.requestFrom(address, (int8)4);
-  value  = (int32)Wire.read() << 24; // value highest byte
-  value |= (int32)Wire.read() << 16;
-  value |= (int16)Wire.read() <<  8;
-  value |=           Wire.read();       // value lowest byte
+  i2c_start();
+  i2c_write(address);
+  last_status = i2c_write(reg);
+  
+  i2c_start();
+  i2c_write(address | 1);
+  value =  (int32)i2c_read() << 24;
+  value |= (int32)i2c_read() << 16;
+  value |= (int32)i2c_read() << 8;
+  value |= i2c_read(0);
+
 
   return value;
 }
 
 // Write an arbitrary number of bytes from the given array to the sensor,
 // starting at the given register
-void writeMulti(int8 reg, int8 const * src, int8 count)
+void writeMulti(int8 reg, int8 * src, int8 count)
 {
-  Wire.beginTransmission(address);
-  Wire.write(reg);
+//!  Wire.beginTransmission(address);
+//!  Wire.write(reg);
+//!
+//!  while (count-- > 0)
+//!  {
+//!    Wire.write(*(src++));
+//!  }
+//!
+//!  last_status = Wire.endTransmission();
 
-  while (count-- > 0)
-  {
-    Wire.write(*(src++));
-  }
+   i2c_start();
+   i2c_write(address);
+   i2c_write(reg);
+   
+   while (count-- > 0) {
+      last_status = i2c_write(*src++);
+   }
+   
+   i2c_stop();
 
-  last_status = Wire.endTransmission();
 }
 
 // Read an arbitrary number of bytes from the sensor, starting at the given
 // register, into the given array
 void readMulti(int8 reg, int8 * dst, int8 count)
 {
-  Wire.beginTransmission(address);
-  Wire.write(reg);
-  last_status = Wire.endTransmission();
+//!  Wire.beginTransmission(address);
+//!  Wire.write(reg);
+//!  last_status = Wire.endTransmission();
+//!
+//!  Wire.requestFrom(address, count);
+//!
+//!  while (count-- > 0)
+//!  {
+//!    *(dst++) = Wire.read();
+//!  }
 
-  Wire.requestFrom(address, count);
+   i2c_start();
+   i2c_write(address);
+   last_status = i2c_write(reg);
+   
+   i2c_start();
+   i2c_write(address|1);
+   while (count-- > 1) {
+      *(dst++) = i2c_read();
+   }
+   *(dst++) = i2c_read(0);
 
-  while (count-- > 0)
-  {
-    *(dst++) = Wire.read();
-  }
+   i2c_stop();
+
+
 }
 
 // Set the return signal rate limit check value in units of MCPS (mega counts
@@ -718,7 +827,7 @@ boolean setVcselPulsePeriod(vcselPeriodType type, int8 period_pclks)
 
     // set_sequence_step_timeout end
   }
-  else
+  else 
   {
     // invalid type
     return false;
@@ -935,7 +1044,7 @@ void getSequenceStepEnables(SequenceStepEnables * enables)
 // based on get_sequence_step_timeout(),
 // but gets all timeouts instead of just the requested one, and also stores
 // intermediate values
-void getSequenceStepTimeouts(SequenceStepEnables const * enables, SequenceStepTimeouts * timeouts)
+void getSequenceStepTimeouts(SequenceStepEnables  * enables, SequenceStepTimeouts * timeouts)
 {
   timeouts->pre_range_vcsel_period_pclks = getVcselPulsePeriod(VcselPeriodPreRange);
 
@@ -1038,3 +1147,10 @@ boolean performSingleRefCalibration(int8 vhv_init_byte)
 
   return true;
 }
+
+
+//!void main() {
+//!   delay_ms(1000);
+//!   init();
+//!
+//!}
