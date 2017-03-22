@@ -5,7 +5,7 @@
  By Arnan (Roger) Sipitakiat<br>
  Learning Inventions Laboratory, Chiang Mai University
 
-Based on the VL53L0X library for the Arduino by Pololu. See project on [GitHub](https://github.com/pololu/vl53l0x-arduino) 
+Based on the VL53L0X library for the Arduino by Pololu. See the project on [GitHub](https://github.com/pololu/vl53l0x-arduino) 
 
 ## Summary
 
